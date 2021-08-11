@@ -28,12 +28,8 @@ export class LoginPageComponent implements OnInit {
     this.route.queryParams.subscribe((params: Params) => {
       if (params['loginAgain']) {
         this.message = 'Please, first login!'
-      }
-    })
-
-    this.route.url.subscribe((params: UrlSegment[]) => {
-      if(params[0].path === 'login' && this.auth.isAuthenticated()){
-        this.router.navigate(['/admin', 'dashboard'])
+      } else if (params['authFailed']) {
+        this.message = 'Please login first)'
       }
     })
 

@@ -7,15 +7,16 @@ import { LoginPageComponent } from './login-page/login-page.component';
 import { DashboardPageComponent } from './dashboard-page/dashboard-page.component';
 import { CreatePageComponent } from './create-page/create-page.component';
 import { EditPageComponent } from './edit-page/edit-page.component';
-import { AuthService } from "./shared/services/auth.service";
 import { SharedModule } from "../shared/shared.module";
 import { AuthGuard } from "./shared/services/auth.guard";
+import { NoAuthGuard } from "./shared/services/no-auth.guard";
+import { SearchPipe } from "./shared/search.pipe";
 
 const routes: Routes = [
     {
         path: '', component: AdminLayoutComponent, children: [
             {path: '', redirectTo: '/admin/login', pathMatch: 'full'},
-            {path: 'login', component: LoginPageComponent},
+            {path: 'login', component: LoginPageComponent, canActivate: [NoAuthGuard]},
             {path: 'dashboard', component: DashboardPageComponent, canActivate: [AuthGuard]},
             {path: 'create', component: CreatePageComponent, canActivate: [AuthGuard]},
             {path: 'post/:id/edit', component: EditPageComponent, canActivate: [AuthGuard]}
@@ -37,9 +38,10 @@ const routes: Routes = [
       LoginPageComponent,
       DashboardPageComponent,
       CreatePageComponent,
-      EditPageComponent
+      EditPageComponent,
+      SearchPipe
     ],
-    providers: [AuthService, AuthGuard]
+    providers: [AuthGuard, NoAuthGuard]
 })
 
 export class AdminModule {

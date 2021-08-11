@@ -10,7 +10,7 @@ export class PostsService {
     constructor(private http: HttpClient){}
 
     create(post: Post): Observable<Post> {
-        return this.http.post(`${environment.fbDbUrl}/posts.json`, post)
+        return this.http.post<FbCreateResponse>(`${environment.fbDbUrl}/posts.json`, post)
             .pipe(map((res:FbCreateResponse) => {
                 const newPost: Post = {
                     ...post,
@@ -19,5 +19,22 @@ export class PostsService {
                 }
                 return newPost;
             }))
+    }
+
+    getAll(): Observable<Post[]> {
+        return this.http.get(`${environment.fbDbUrl}/posts.json`)
+            .pipe(map((res: {[key: string]: any}) => {
+                return Object
+                    .keys(res)
+                    .map(key => ({
+                        ...res[key],
+                        id: key,
+                        date: new Date(res[key].date)
+                    }))
+            }))
+    }
+
+    remove(id: string): Observable<void> {
+        return this.http.delete<void>(`${environment.fbDbUrl}/posts/${id}.json`)
     }
 }
