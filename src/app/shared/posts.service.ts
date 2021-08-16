@@ -24,6 +24,9 @@ export class PostsService {
     getAll(): Observable<Post[]> {
         return this.http.get(`${environment.fbDbUrl}/posts.json`)
             .pipe(map((res: {[key: string]: any}) => {
+                if(!res) {
+                    return [];
+                }
                 return Object
                     .keys(res)
                     .map(key => ({
@@ -32,6 +35,22 @@ export class PostsService {
                         date: new Date(res[key].date)
                     }))
             }))
+    }
+
+    getById(id:string): Observable<Post>{
+        return this.http.get<Post>(`${environment.fbDbUrl}/posts/${id}.json`)
+            .pipe(map((post: Post) => {
+                console.log(post)
+                return {
+                    ...post, 
+                    id,
+                    date: new Date(post.date)
+                };
+            }))
+    }
+
+    update(post: Post): Observable<Post> {
+        return this.http.patch<Post>(`${environment.fbDbUrl}/posts/${post.id}.json`, post)
     }
 
     remove(id: string): Observable<void> {

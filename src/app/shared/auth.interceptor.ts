@@ -11,9 +11,8 @@ export class AuthInerceptor implements HttpInterceptor {
     constructor(
         private auth: AuthService,
         private router: Router
-    ) {
-
-    }
+    ){}
+    
     intercept(
         req: HttpRequest<any>, 
         next: HttpHandler

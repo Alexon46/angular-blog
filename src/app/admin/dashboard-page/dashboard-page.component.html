@@ -1,6 +1,6 @@
-<ng-container *ngIf="posts.length; else loading">
+<ng-container *ngIf="posts$ | async as posts; else loadingBlock">
     <div class="form-control">
-        <input type="text" placeholder="Search post" [(ngModel)]="searchStr">
+        <input type="text" [formControl]="search" placeholder="Search post">
     </div>
     <table>
         <thead>
@@ -13,22 +13,29 @@
             </tr>
         </thead>
         <tbody>
-            <tr *ngFor="let post of posts | searchPosts:searchStr; let idx = index">
-                <td>{{idx + 1}}</td>
-                <td>{{post.author}}</td>
-                <td>{{post.title}}</td>
-                <td>{{post.date | date: 'medium'}}</td>
-                <td>
-                    <button 
-                        class="btn btn-link open"
-                        [routerLink]="['/admin', 'post', post.id, 'edit']"
-                    >Edit</button>
-                    <a (click)="remove(post.id)">Remove</a>
-                </td>
-            </tr>
+            <ng-container *ngIf="posts.length; else noPostsBlock">
+                <tr *ngFor="let post of posts; let idx = index" >
+                    <td>{{idx + 1}}</td>
+                    <td>{{post.author}}</td>
+                    <td>{{post.title}}</td>
+                    <td>{{post.date | date: 'medium'}}</td>
+                    <td>
+                        <button 
+                            class="btn btn-link open"
+                            [routerLink]="['/admin', 'post', post.id, 'edit']"
+                        >Edit</button>
+                        <a (click)="remove(post.id)">Remove</a>
+                    </td>
+                </tr>
+            </ng-container>
+            <ng-template #noPostsBlock>
+                <tr>
+                    <td colspan="5"><p class="text-center">No posts</p></td>
+                </tr>
+            </ng-template>
         </tbody>
     </table>
 </ng-container>
-<ng-template #loading>
+<ng-template #loadingBlock>
     <p class="text-center">Loading...</p>
 </ng-template>
