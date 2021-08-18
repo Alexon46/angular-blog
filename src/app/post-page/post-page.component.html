@@ -1,7 +1,7 @@
 <div
     *ngIf="post$ | async as post; else loadingBlock"
 >
-    <div class="post">
+    <div class="post" >
         <div class="header">
             <h1>{{post.title}}</h1>
             <button class="btn btn-link" [routerLink]="['/']">Back to home</button>

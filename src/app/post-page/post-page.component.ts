@@ -1,7 +1,8 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
-import { Observable } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
+import { Observable, throwError } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 import { Post } from '../shared/interfaces';
 import { PostsService } from '../shared/posts.service';
 
@@ -12,6 +13,7 @@ import { PostsService } from '../shared/posts.service';
 })
 export class PostPageComponent implements OnInit {
 
+  id!:string
   post$!: Observable<Post>
 
   constructor(
@@ -19,11 +21,30 @@ export class PostPageComponent implements OnInit {
     private postsService: PostsService
   ) {}
 
-  ngOnInit(): void {
-    this.post$ = this.route.params
-      .pipe(switchMap((params: Params) => {
-        return this.postsService.getById(params.id)
-      }))
+  ngOnInit() {
+    this.route.params
+      .pipe(
+        catchError(this.handleError.bind(this))
+      )
+      .subscribe((params: Params) => {
+        this.id = params.id
+        this.postsService.getById(this.id)
+      })
+
+    this.post$ = this.postsService.getPosts$()
+      .pipe(
+        map((posts: Post[]) => {
+          return posts.find(post => post.id === this.id)!
+        })
+      )
   }
+
+  private handleError(error: HttpErrorResponse){
+    const {message}=error.error.error
+
+    console.log(message);
+
+    return throwError(message)
+}
 
 }

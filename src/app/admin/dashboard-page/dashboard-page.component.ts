@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { combineLatest, Observable } from 'rxjs';
-import { first, map, startWith, switchMap, tap } from 'rxjs/operators';
+import { first, map, startWith } from 'rxjs/operators';
 import { Post } from 'src/app/shared/interfaces';
 import { PostsService } from 'src/app/shared/posts.service';
 
@@ -18,16 +18,11 @@ export class DashboardPageComponent implements OnInit {
   constructor(private postsService: PostsService) { }
 
   ngOnInit(): void {
-    this.posts$ = this.combineStream()
-  }
-
-  combineStream() {
-    return combineLatest(
+    this.posts$ = combineLatest(
       this.search.valueChanges.pipe(startWith('')),
-      this.postsService.getAll()
-    ).pipe(
-      map(this.filter)
-    )
+      this.postsService.getPosts$()
+    ).pipe(map(this.filter))
+    this.postsService.getAll()
   }
 
   filter([searchStr, allPosts]: [string, Post[]]) {
@@ -40,13 +35,7 @@ export class DashboardPageComponent implements OnInit {
   }
 
   remove(id:string|undefined) {
-    this.posts$ = this.postsService.remove(id!)
-      .pipe(
-        first(),
-        switchMap(() => {
-          return this.combineStream()
-        })
-      )
+    this.postsService.remove(id!)
   }
 
 }

@@ -1,16 +1,24 @@
 import { HttpClient } from "@angular/common/http";
 import { Injectable } from "@angular/core";
-import { Observable } from "rxjs";
+import { BehaviorSubject } from "rxjs";
 import { map } from "rxjs/operators";
 import { FbCreateResponse, Post } from "src/app/shared/interfaces";
 import { environment } from "src/environments/environment";
 
 @Injectable({providedIn: 'root'})
 export class PostsService {
+
+    private _posts$:BehaviorSubject<Post[]> = new BehaviorSubject<Post[]>([])
+    private postsStore: Post[] = []
+
     constructor(private http: HttpClient){}
 
-    create(post: Post): Observable<Post> {
-        return this.http.post<FbCreateResponse>(`${environment.fbDbUrl}/posts.json`, post)
+    getPosts$() {
+        return this._posts$;
+    }
+
+    create(post: Post, callback?: Function) {
+        this.http.post<FbCreateResponse>(`${environment.fbDbUrl}/posts.json`, post)
             .pipe(map((res:FbCreateResponse) => {
                 const newPost: Post = {
                     ...post,
@@ -19,14 +27,21 @@ export class PostsService {
                 }
                 return newPost;
             }))
+            .subscribe((post: Post) => {
+                this.postsStore.push(post);
+                this._posts$.next(this.postsStore)
+                if(callback){
+                    callback()
+                }
+            })
     }
 
-    getAll(): Observable<Post[]> {
-        return this.http.get(`${environment.fbDbUrl}/posts.json`)
+    getAll() {
+        this.http.get(`${environment.fbDbUrl}/posts.json`)
             .pipe(map((res: {[key: string]: any}) => {
-                if(!res) {
-                    return [];
-                }
+
+                if(!res) return [];
+
                 return Object
                     .keys(res)
                     .map(key => ({
@@ -35,25 +50,65 @@ export class PostsService {
                         date: new Date(res[key].date)
                     }))
             }))
+            .subscribe((posts) => {
+                this.postsStore = posts;
+                this._posts$.next(this.postsStore)
+            })
     }
 
-    getById(id:string): Observable<Post>{
-        return this.http.get<Post>(`${environment.fbDbUrl}/posts/${id}.json`)
+    getById(id:string, callback?: Function){
+        this.http.get<Post>(`${environment.fbDbUrl}/posts/${id}.json`)
             .pipe(map((post: Post) => {
-                console.log(post)
                 return {
                     ...post, 
                     id,
                     date: new Date(post.date)
                 };
             }))
+            .subscribe((post: Post) => {
+
+                let isFoundInStore = false;
+
+                this.postsStore.forEach((p, i) => {
+                    if(p.id === id) {
+                        this.postsStore[i] = post
+                        isFoundInStore = true;
+                    }
+                })
+
+                if (!isFoundInStore) {
+                    this.postsStore.push(post)
+                }
+
+                if(callback){
+                    callback(post)
+                }
+
+                this._posts$.next(this.postsStore)
+            })
     }
 
-    update(post: Post): Observable<Post> {
-        return this.http.patch<Post>(`${environment.fbDbUrl}/posts/${post.id}.json`, post)
+    update(post: Post, callback?: Function) {
+
+        this.http.patch<Post>(`${environment.fbDbUrl}/posts/${post.id}.json`, post).subscribe(() => {
+            this.postsStore.forEach((p, i) => {
+                if (p.id === post.id) { 
+                    this.postsStore[i] = post; 
+                }
+            });
+            this._posts$.next(this.postsStore)
+            if(callback){
+                callback()
+            }
+        })
     }
 
-    remove(id: string): Observable<void> {
-        return this.http.delete<void>(`${environment.fbDbUrl}/posts/${id}.json`)
+    remove(id: string) {
+        this.http.delete<void>(`${environment.fbDbUrl}/posts/${id}.json`).subscribe(() => {
+            this.postsStore = this.postsStore.filter((p, i) => {
+                return p.id !== id
+            });
+            this._posts$.next(this.postsStore)
+        })
     }
 }
